@@ -78,11 +78,21 @@ const verifyPayment = async (req, res) => {
             payment.paymentStatus = req.body.status || 'verified';
             const updatedPayment = await payment.save();
 
-            // If verified, update order status to 'paid' (or handled in order logic)
+            // If verified, update order status to 'processing' and update tracking
             if (payment.paymentStatus === 'verified') {
                 const order = await Order.findById(payment.orderId);
                 if (order) {
-                    order.orderStatus = 'paid'; // Or whatever status represents paid
+                    order.paymentStatus = 'verified';
+                    order.orderStatus = 'processing';
+
+                    // Mark 'Processing' step as completed
+                    order.trackingSteps = order.trackingSteps.map(step => {
+                        if (step.step === 'Processing') {
+                            return { ...step.toObject(), completed: true, date: new Date() };
+                        }
+                        return step;
+                    });
+
                     await order.save();
                 }
             }

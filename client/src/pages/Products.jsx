@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { products, categories } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +10,44 @@ const Products = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('Featured');
     const [showFilters, setShowFilters] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const categories = [
+        { name: "Vathal" },
+        { name: "Grains" },
+        { name: "Pulses" },
+        { name: "Spices" },
+        { name: "Cotton" }
+    ];
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/products');
+                const data = await response.json();
+                if (response.ok) {
+                    // Map backend data to local structure if names differ
+                    const mappedData = data.map(p => ({
+                        id: p._id,
+                        name: p.name,
+                        category: p.category,
+                        price: p.pricePerKg,
+                        image: p.imageUrl,
+                        description: p.description,
+                        bulkOptions: p.bulkOptions,
+                        stock: p.stock
+                    }));
+                    setProducts(mappedData);
+                }
+            } catch (err) {
+                console.error('Error fetching products:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
 
     const filteredProducts = products.filter(product => {
         const matchesCategory = categoryFilter === 'All' || product.category === categoryFilter;
@@ -24,6 +61,8 @@ const Products = () => {
         if (sortBy === 'Price: High to Low') return b.price - a.price;
         return 0; // Featured/Default
     });
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Marketplace...</div>;
 
     return (
         <div className="bg-nature-bg min-h-screen pb-20">

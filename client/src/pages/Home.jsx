@@ -1,11 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { products, categories } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import { motion } from 'framer-motion';
 import { Truck, ShieldCheck, Tag, ArrowRight } from 'lucide-react';
 
 const Home = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const categories = [
+        { name: "Vathal", icon: "🌶️", description: "Traditional dried vegetables" },
+        { name: "Grains", icon: "🌾", description: "Paddy, Rice, Millets & more" },
+        { name: "Pulses", icon: "🥣", description: "Lentils, Beans & Peas" },
+        { name: "Spices", icon: "🌿", description: "Pure & Aromatic spices" },
+        { name: "Cotton", icon: "☁️", description: "Quality raw cotton" }
+    ];
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/products');
+                const data = await response.json();
+                if (response.ok) {
+                    const mappedData = data.map(p => ({
+                        id: p._id,
+                        name: p.name,
+                        category: p.category,
+                        price: p.pricePerKg,
+                        image: p.imageUrl,
+                        description: p.description,
+                        bulkOptions: p.bulkOptions,
+                        stock: p.stock,
+                        rating: 4.8,
+                        reviews: 124,
+                        unit: 'kg'
+                    }));
+                    setProducts(mappedData);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
     const featuredProducts = products.slice(0, 4);
 
     return (

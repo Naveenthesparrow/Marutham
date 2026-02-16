@@ -1,31 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { Star, ShieldCheck, Truck, Scale, BadgeCheck, Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const ProductDetail = () => {
     const { id } = useParams();
-    const product = products.find(p => p.id === parseInt(id));
     const { addToCart } = useCart();
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const [selectedOption, setSelectedOption] = useState(product?.bulkOptions[0]);
+    const [selectedOption, setSelectedOption] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
 
-    if (!product) return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
-            <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-            <Link to="/products" className="text-primary font-bold">Back to marketplace</Link>
-        </div>
-    );
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const response = await fetch(`http://localhost:5000/api/products/${id}`);
+                const data = await response.json();
+                if (response.ok) {
+                    const mappedProduct = {
+                        id: data._id,
+                        name: data.name,
+                        category: data.category,
+                        price: data.pricePerKg,
+                        image: data.imageUrl,
+                        description: data.description,
+                        bulkOptions: data.bulkOptions,
+                        stock: data.stock,
+                        rating: 4.8, // Mock as backend doesn't have it yet
+                        reviews: 124, // Mock
+                        unit: 'kg'
+                    };
+                    setProduct(mappedProduct);
+                    setSelectedOption(mappedProduct.bulkOptions[0]);
+                }
+            } catch (err) {
+                console.error('Error fetching product:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProduct();
+    }, [id]);
 
     const handleAddToCart = () => {
         addToCart(product, quantity, selectedOption);
         setAdded(true);
         setTimeout(() => setAdded(false), 2000);
     };
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Details...</div>;
 
     return (
         <div className="bg-nature-bg min-h-screen pb-20">
@@ -90,8 +116,8 @@ const ProductDetail = () => {
                                         key={option.quantity}
                                         onClick={() => setSelectedOption(option)}
                                         className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${selectedOption.quantity === option.quantity
-                                                ? 'border-primary bg-primary/5 shadow-md'
-                                                : 'border-stone-100 bg-nature-bg hover:border-stone-200'
+                                            ? 'border-primary bg-primary/5 shadow-md'
+                                            : 'border-stone-100 bg-nature-bg hover:border-stone-200'
                                             }`}
                                     >
                                         <span className="text-lg font-bold text-stone-900">{option.quantity}{product.unit}</span>

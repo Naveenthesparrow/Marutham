@@ -6,31 +6,38 @@ const orderSchema = mongoose.Schema({
         required: true,
         ref: 'User',
     },
-    items: [{
-        productId: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'Product',
+    items: [
+        {
+            productId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Product' },
+            name: { type: String, required: true },
+            quantityKg: { type: Number, required: true },
+            price: { type: Number, required: true },
+            image: { type: String },
         },
-        quantityKg: {
-            type: Number,
-            required: true,
-        },
-        price: {
-            type: Number,
-            required: true,
-        },
-    }],
+    ],
     totalAmount: {
         type: Number,
         required: true,
     },
+    paymentStatus: {
+        type: String,
+        required: true,
+        enum: ['pending', 'verified', 'failed'],
+        default: 'pending',
+    },
     orderStatus: {
         type: String,
         required: true,
-        enum: ['pending', 'shipped', 'delivered'],
-        default: 'pending',
+        enum: ['placed', 'processing', 'shipped', 'delivered'],
+        default: 'placed',
     },
+    trackingSteps: [
+        {
+            step: { type: String, required: true },
+            completed: { type: Boolean, default: false },
+            date: { type: Date },
+        },
+    ],
 }, {
     timestamps: true,
 });

@@ -1,42 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QrCode, Upload, CheckCircle, Clock, AlertCircle, Copy, Info, ArrowLeft, Camera } from 'lucide-react';
 
 const Payment = () => {
     const { orderId } = useParams();
     const navigate = useNavigate();
+    const { user, token } = useAuth();
     const [loading, setLoading] = useState(true);
     const [qrData, setQrData] = useState(null);
     const [screenshot, setScreenshot] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState('none'); // none, pending, verified, rejected
-    const [paymentDetails, setPaymentDetails] = useState(null);
+    const [error, setError] = useState('');
 
-    // Mock fetching QR data - in a real app, this would be an API call
     useEffect(() => {
         const fetchQR = async () => {
-            // simulate API delay
-            setTimeout(() => {
-                setQrData({
-                    qrCode: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=marutham@upi%26pn=Marutham%20Agro%26am=5000%26cu=INR%26tn=Order" + orderId,
-                    upiId: "marutham@upi",
-                    merchantName: "Marutham Agro Store",
-                    amount: 5000, // This should come from order details
-                    transactionNote: `OrderID-${orderId}`
+            try {
+                const response = await fetch('http://localhost:5000/api/payment/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ orderId, amount: 5000 }) // Amount should be dynamic in real app
                 });
+                const data = await response.json();
+                if (response.ok) {
+                    setQrData(data);
+                } else {
+                    setError(data.message);
+                }
+            } catch (err) {
+                setError('Failed to load payment details');
+            } finally {
                 setLoading(false);
-            }, 1000);
+            }
         };
 
-        fetchQR();
-        checkStatus();
-    }, [orderId]);
+        const checkStatus = async () => {
+            try {
+                const response = await fetch(`http://localhost:5000/api/payment/status/${orderId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    setPaymentStatus(data.paymentStatus);
+                }
+            } catch (err) {
+                // Silent fail for status check
+            }
+        };
 
-    const checkStatus = async () => {
-        // Search for existing payment record
-        // For demo, we'll keep it as 'none'
-    };
+        if (token) {
+            fetchQR();
+            checkStatus();
+        }
+    }, [orderId, token]);
 
     const handleFileChange = (e) => {
         if (e.target.files[0]) {
@@ -49,11 +72,33 @@ const Payment = () => {
         if (!screenshot) return alert('Please upload a screenshot');
 
         setUploading(true);
-        // Simulate upload
-        setTimeout(() => {
+        const formData = new FormData();
+        formData.append('screenshot', screenshot);
+        formData.append('orderId', orderId);
+        formData.append('userId', user._id);
+        formData.append('amount', qrData.amount);
+        formData.append('transactionNote', qrData.transactionNote);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/payment/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                setPaymentStatus('pending');
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Upload failed');
+            }
+        } catch (err) {
+            alert('Network error. Please try again.');
+        } finally {
             setUploading(false);
-            setPaymentStatus('pending');
-        }, 2000);
+        }
     };
 
     const copyToClipboard = (text) => {

@@ -1,18 +1,64 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { Trash2, Minus, Plus, ShoppingCart, ArrowRight, Truck, CreditCard, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Cart = () => {
     const { cart, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
     const navigate = useNavigate();
+    const { user, token } = useAuth(); // Added useAuth hook
 
-    const handleCheckout = () => {
-        // In a real app, you would create an order in the backend first
-        // For now, we'll generate a random orderId and navigate
-        const mockOrderId = Math.floor(100000 + Math.random() * 900000);
-        navigate(`/payment/${mockOrderId}`);
+    const handleCheckout = async () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        // Safety check for old mock data
+        const hasMockData = cart.some(item => typeof item.id === 'number' || !item.id.toString().match(/^[0-9a-fA-F]{24}$/));
+        if (hasMockData) {
+            const confirmClear = window.confirm("Your cart contains outdated items from a previous session. We need to clear them to proceed with the new database system. Clear cart and start again?");
+            if (confirmClear) {
+                clearCart();
+                alert("Cart cleared. Please add your bulk items from the Marketplace again.");
+            }
+            return;
+        }
+
+        const orderData = {
+            items: cart.map(item => ({
+                productId: item.id,
+                name: item.name,
+                quantityKg: item.selectedOption.quantity * item.quantity,
+                price: item.selectedOption.price * item.quantity,
+                image: item.image
+            })),
+            totalAmount: cartTotal + 99
+        };
+
+        try {
+            const response = await fetch('http://localhost:5000/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                clearCart();
+                navigate(`/payment/${data._id}`);
+            } else {
+                alert(data.message || 'Failed to place order');
+            }
+        } catch (err) {
+            alert('Network error. Please try again.');
+        }
     };
 
     if (cart.length === 0) {

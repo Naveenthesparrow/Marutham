@@ -7,9 +7,11 @@ const {
     removeCartItem,
 } = require('../controllers/cartController');
 
-router.route('/add').post(addItemToCart);
-router.route('/update').put(updateCartItem);
-router.route('/:userId').get(getCart);
-router.route('/remove/:userId/:productId').delete(removeCartItem);
+const { protect } = require('../middleware/authMiddleware');
+
+router.route('/add').post(protect, addItemToCart);
+router.route('/update').put(protect, updateCartItem);
+router.route('/:userId').get(protect, getCart);
+router.route('/remove/:userId/:productId').delete(protect, removeCartItem);
 
 module.exports = router;

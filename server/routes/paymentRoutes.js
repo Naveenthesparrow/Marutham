@@ -38,9 +38,11 @@ const upload = multer({
     fileFilter
 });
 
-router.post('/create', createPaymentIntent);
-router.post('/upload', upload.single('screenshot'), uploadScreenshot);
-router.get('/status/:orderId', getPaymentStatus);
-router.put('/verify/:paymentId', verifyPayment);
+const { protect, admin } = require('../middleware/authMiddleware');
+
+router.post('/create', protect, createPaymentIntent);
+router.post('/upload', protect, upload.single('screenshot'), uploadScreenshot);
+router.get('/status/:orderId', protect, getPaymentStatus);
+router.put('/verify/:paymentId', protect, admin, verifyPayment);
 
 module.exports = router;
