@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
     Package,
     ChevronRight,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 
 const Orders = () => {
+    const { t } = useTranslation();
     const { token } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,7 +26,7 @@ const Orders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/orders/my', {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/my`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -65,7 +67,7 @@ const Orders = () => {
             <div className="min-h-screen bg-nature-bg flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-stone-500 font-medium">Loading your shipments...</p>
+                    <p className="text-stone-500 font-medium">{t('orders.loading')}</p>
                 </div>
             </div>
         );
@@ -77,8 +79,8 @@ const Orders = () => {
 
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                     <div>
-                        <h1 className="text-4xl font-display font-extrabold text-stone-900 mb-2">My Shipments</h1>
-                        <p className="text-stone-500">Track and manage your bulk agricultural orders.</p>
+                        <h1 className="text-4xl font-display font-extrabold text-stone-900 mb-2">{t('orders.title')}</h1>
+                        <p className="text-stone-500">{t('orders.subtitle')}</p>
                     </div>
 
                     <div className="flex bg-white p-1 rounded-2xl border border-nature-border shadow-sm">
@@ -87,11 +89,11 @@ const Orders = () => {
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all capitalize ${activeTab === tab
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                        : 'text-stone-400 hover:text-stone-600'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                    : 'text-stone-400 hover:text-stone-600'
                                     }`}
                             >
-                                {tab}
+                                {t(`orders.tabs.${tab}`)}
                             </button>
                         ))}
                     </div>
@@ -102,12 +104,12 @@ const Orders = () => {
                         <div className="w-20 h-20 bg-nature-bg rounded-3xl flex items-center justify-center mx-auto mb-6">
                             <Package className="w-10 h-10 text-stone-300" />
                         </div>
-                        <h3 className="text-2xl font-display font-bold text-stone-900 mb-4">No Shipments Found</h3>
+                        <h3 className="text-2xl font-display font-bold text-stone-900 mb-4">{t('orders.no_orders_title')}</h3>
                         <p className="text-stone-500 mb-8 max-w-sm mx-auto">
-                            You haven't placed any bulk orders matching this filter yet.
+                            {t('orders.no_orders_text')}
                         </p>
                         <Link to="/products" className="btn-primary inline-flex">
-                            Browse Products <ArrowRight className="w-5 h-5 ml-2" />
+                            {t('orders.browse_products')} <ArrowRight className="w-5 h-5 ml-2" />
                         </Link>
                     </div>
                 ) : (
@@ -123,22 +125,22 @@ const Orders = () => {
                                 <div className="p-6 md:p-8 border-b border-nature-border bg-stone-50/50 flex flex-col md:flex-row justify-between gap-6">
                                     <div className="flex flex-wrap gap-x-12 gap-y-4">
                                         <div>
-                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block mb-1">Order ID</span>
+                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block mb-1">{t('orders.order_id')}</span>
                                             <span className="font-mono font-bold text-stone-700">#{order._id.slice(-8).toUpperCase()}</span>
                                         </div>
                                         <div>
-                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block mb-1">Date Placed</span>
+                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block mb-1">{t('orders.date_placed')}</span>
                                             <span className="font-bold text-stone-700">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                         </div>
                                         <div>
-                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block mb-1">Total Amount</span>
+                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block mb-1">{t('orders.total_amount')}</span>
                                             <span className="font-bold text-primary">₹{order.totalAmount.toLocaleString()}</span>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-3">
                                         <div className={`px-4 py-1.5 rounded-full text-xs font-bold border uppercase tracking-wider ${getStatusColor(order.orderStatus)}`}>
-                                            {order.orderStatus}
+                                            {t(`orders.status.${order.orderStatus}`)}
                                         </div>
                                         <Link
                                             to={`/payment/${order._id}`}
@@ -155,7 +157,7 @@ const Orders = () => {
                                     {/* Items List */}
                                     <div className="lg:col-span-2 space-y-6">
                                         <h4 className="text-sm font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Package className="w-4 h-4" /> Shipment Contents
+                                            <Package className="w-4 h-4" /> {t('orders.contents')}
                                         </h4>
                                         <div className="space-y-4">
                                             {order.items.map((item, idx) => (
@@ -163,7 +165,7 @@ const Orders = () => {
                                                     <img src={item.image} alt={item.name} className="w-16 h-16 rounded-xl object-cover shrink-0" />
                                                     <div className="flex-grow">
                                                         <h5 className="font-bold text-stone-800">{item.name}</h5>
-                                                        <p className="text-stone-500 text-sm">{item.quantityKg}kg bulk pack</p>
+                                                        <p className="text-stone-500 text-sm">{item.quantityKg}kg {t('orders.bulk_pack')}</p>
                                                     </div>
                                                     <div className="text-right">
                                                         <span className="font-bold text-stone-900">₹{item.price}</span>
@@ -176,7 +178,7 @@ const Orders = () => {
                                     {/* Tracking Timeline */}
                                     <div className="space-y-6">
                                         <h4 className="text-sm font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Truck className="w-4 h-4" /> Live Tracking
+                                            <Truck className="w-4 h-4" /> {t('orders.tracking')}
                                         </h4>
 
                                         <div className="relative pl-8 space-y-8">
@@ -211,9 +213,9 @@ const Orders = () => {
                                                     <CreditCard className={`w-5 h-5 ${order.paymentStatus === 'verified' ? 'text-leaf' : 'text-amber-500'}`} />
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block">Payment Status</span>
+                                                    <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest block">{t('orders.payment_status')}</span>
                                                     <span className={`font-bold text-sm capitalize ${order.paymentStatus === 'verified' ? 'text-leaf' : 'text-amber-500'}`}>
-                                                        {order.paymentStatus === 'verified' ? 'Payment Verified' : 'Awaiting Confirmation'}
+                                                        {order.paymentStatus === 'verified' ? t('orders.payment_verified') : t('orders.awaiting_confirmation')}
                                                     </span>
                                                 </div>
                                             </div>

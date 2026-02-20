@@ -18,6 +18,8 @@ const userRoutes = require('./routes/userRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const comingSoonRoutes = require('./routes/comingSoonRoutes');
 const path = require('path');
 
 // Load environment variables
@@ -43,6 +45,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/comingsoon', comingSoonRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

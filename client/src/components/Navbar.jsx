@@ -1,21 +1,39 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Search, Menu, X, Leaf, User, LogOut, LogIn } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Search, Menu, X, Leaf, User, LogOut, LogIn, Languages } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const Navbar = () => {
+    const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const { cartCount } = useCart();
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const toggleLanguage = () => {
+        const newLang = i18n.language === 'en' ? 'ta' : 'en';
+        i18n.changeLanguage(newLang);
+    };
+
+    const handleSearch = (e) => {
+        if (e.key === 'Enter' || e.type === 'click') {
+            if (searchQuery.trim()) {
+                navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+                setIsOpen(false);
+                setSearchQuery('');
+            }
+        }
+    };
 
     const navLinks = [
-        { name: 'Home', path: '/' },
-        { name: 'Products', path: '/products' },
-        { name: 'My Orders', path: '/orders' },
-        { name: 'Contact', path: '/contact' },
+        { name: t('nav.home'), path: '/' },
+        { name: t('nav.products'), path: '/products' },
+        { name: t('nav.contact'), path: '/contact' },
     ];
 
     return (
@@ -27,14 +45,14 @@ const Navbar = () => {
                         <div className="bg-primary p-2 rounded-lg group-hover:rotate-12 transition-transform duration-300">
                             <Leaf className="text-white w-6 h-6" />
                         </div>
-                        <span className="text-2xl font-display font-bold text-primary tracking-tight">Marutham</span>
+                        <span className="text-2xl font-display font-bold text-primary tracking-tight">{t('common.logo')}</span>
                     </Link>
 
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center gap-8">
                         {navLinks.map((link) => (
                             <Link
-                                key={link.name}
+                                key={link.path}
                                 to={link.path}
                                 className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === link.path ? 'text-primary' : 'text-stone-600'
                                     }`}
@@ -46,12 +64,28 @@ const Navbar = () => {
 
                     {/* Actions */}
                     <div className="flex items-center gap-4">
+                        {/* Language Switcher */}
+                        <button
+                            onClick={toggleLanguage}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border border-nature-border hover:bg-nature-bg transition-colors text-sm ${i18n.language === 'en' ? 'font-medium' : 'font-normal'} text-stone-700`}
+                            title={i18n.language === 'en' ? 'தமிழ்' : 'English'}
+                        >
+                            <Languages className="w-4 h-4 text-primary" />
+                            <span>{i18n.language === 'en' ? 'தமிழ்' : 'English'}</span>
+                        </button>
+
                         <div className="hidden lg:flex items-center bg-nature-bg px-4 py-2 rounded-full border border-nature-border focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                            <Search className="w-4 h-4 text-stone-400" />
+                            <Search
+                                className="w-4 h-4 text-stone-400 cursor-pointer hover:text-primary transition-colors"
+                                onClick={handleSearch}
+                            />
                             <input
                                 type="text"
-                                placeholder="Search bulk products..."
-                                className="bg-transparent border-none outline-none text-sm ml-2 w-48 text-stone-700"
+                                placeholder={t('nav.products') + "..."}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={handleSearch}
+                                className="bg-transparent border-none outline-none text-sm ml-2 w-32 xl:w-48 text-stone-700"
                             />
                         </div>
 
@@ -61,18 +95,26 @@ const Navbar = () => {
                                     <User className="w-4 h-4 text-primary" />
                                     <span className="text-sm font-bold text-stone-700 max-w-[100px] truncate">{user.name}</span>
                                 </div>
+                                {isAdmin && (
+                                    <Link
+                                        to="/admin/dashboard"
+                                        className="text-sm font-bold text-secondary-sea-green hover:text-primary transition-colors"
+                                    >
+                                        {t('nav.admin')}
+                                    </Link>
+                                )}
                                 <button
                                     onClick={logout}
                                     className="p-2 text-stone-400 hover:text-red-500 transition-colors"
-                                    title="Logout"
+                                    title={t('nav.logout')}
                                 >
                                     <LogOut className="w-5 h-5" />
                                 </button>
                             </div>
                         ) : (
                             <div className="hidden lg:flex items-center gap-2">
-                                <Link to="/login" className="text-sm font-bold text-stone-600 hover:text-primary px-4 py-2">Sign In</Link>
-                                <Link to="/register" className="btn-primary text-xs py-2 px-4 rounded-full">Register</Link>
+                                <Link to="/login" className="text-sm font-bold text-stone-600 hover:text-primary px-4 py-2">{t('nav.login')}</Link>
+                                <Link to="/register" className="btn-primary text-xs py-2 px-4 rounded-full">{t('nav.register')}</Link>
                             </div>
                         )}
 
@@ -107,7 +149,7 @@ const Navbar = () => {
                         <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
                             {navLinks.map((link) => (
                                 <Link
-                                    key={link.name}
+                                    key={link.path}
                                     to={link.path}
                                     onClick={() => setIsOpen(false)}
                                     className={`text-lg font-medium ${location.pathname === link.path ? 'text-primary' : 'text-stone-600'
@@ -126,14 +168,17 @@ const Navbar = () => {
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="text-stone-900 font-bold">{user.name}</span>
-                                                <Link to="/orders" onClick={() => setIsOpen(false)} className="text-primary text-xs font-bold hover:underline">View My Orders</Link>
+                                                <Link to="/orders" onClick={() => setIsOpen(false)} className="text-primary text-xs font-bold hover:underline">{t('nav.view_orders')}</Link>
+                                                {isAdmin && (
+                                                    <Link to="/admin/dashboard" onClick={() => setIsOpen(false)} className="text-secondary-sea-green text-xs font-bold hover:underline mt-1">{t('nav.admin_dashboard')}</Link>
+                                                )}
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => { logout(); setIsOpen(false); }}
                                             className="flex items-center gap-3 text-stone-600 hover:text-red-500 font-medium px-2 py-2"
                                         >
-                                            <LogOut className="w-5 h-5" /> Logout
+                                            <LogOut className="w-5 h-5" /> {t('nav.logout')}
                                         </button>
                                     </div>
                                 ) : (
@@ -143,23 +188,29 @@ const Navbar = () => {
                                             onClick={() => setIsOpen(false)}
                                             className="flex items-center gap-3 text-stone-600 font-medium px-2 py-2"
                                         >
-                                            <LogIn className="w-5 h-5" /> Sign In
+                                            <LogIn className="w-5 h-5" /> {t('nav.login')}
                                         </Link>
                                         <Link
                                             to="/register"
                                             onClick={() => setIsOpen(false)}
                                             className="btn-primary w-full text-center py-3 rounded-xl"
                                         >
-                                            Create Account
+                                            {t('nav.register')}
                                         </Link>
                                     </div>
                                 )}
                             </div>
                             <div className="flex items-center bg-nature-bg px-4 py-3 rounded-xl border border-nature-border mt-2">
-                                <Search className="w-5 h-5 text-stone-400" />
+                                <Search
+                                    className="w-5 h-5 text-stone-400"
+                                    onClick={handleSearch}
+                                />
                                 <input
                                     type="text"
-                                    placeholder="Search products..."
+                                    placeholder={t('nav.products') + "..."}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={handleSearch}
                                     className="bg-transparent border-none outline-none text-base ml-2 w-full"
                                 />
                             </div>

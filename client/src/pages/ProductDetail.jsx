@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Star, ShieldCheck, Truck, Scale, BadgeCheck, Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const ProductDetail = () => {
+    const { t } = useTranslation();
     const { id } = useParams();
     const { addToCart } = useCart();
     const [product, setProduct] = useState(null);
@@ -17,7 +19,7 @@ const ProductDetail = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/products/${id}`);
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
                 const data = await response.json();
                 if (response.ok) {
                     const mappedProduct = {
@@ -29,8 +31,8 @@ const ProductDetail = () => {
                         description: data.description,
                         bulkOptions: data.bulkOptions,
                         stock: data.stock,
-                        rating: 4.8, // Mock as backend doesn't have it yet
-                        reviews: 124, // Mock
+                        rating: 4.8,
+                        reviews: 124,
                         unit: 'kg'
                     };
                     setProduct(mappedProduct);
@@ -51,13 +53,13 @@ const ProductDetail = () => {
         setTimeout(() => setAdded(false), 2000);
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Details...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center">{t('common.loading')}</div>;
 
     return (
         <div className="bg-nature-bg min-h-screen pb-20">
             <div className="container mx-auto px-4 md:px-6 py-8">
                 <Link to="/products" className="inline-flex items-center gap-2 text-stone-500 hover:text-primary transition-colors mb-8 group">
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Products
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> {t('product_detail.back_link')}
                 </Link>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
@@ -87,7 +89,7 @@ const ProductDetail = () => {
                     <div className="flex flex-col">
                         <div className="mb-6">
                             <span className="text-primary font-bold tracking-widest text-xs uppercase bg-primary/10 px-3 py-1 rounded-full mb-4 inline-block">
-                                {product.category} Produce
+                                {product.category} {t('product_detail.produce')}
                             </span>
                             <h1 className="text-4xl md:text-5xl font-display font-extrabold text-stone-900 mb-4">{product.name}</h1>
                             <div className="flex items-center gap-4">
@@ -98,7 +100,7 @@ const ProductDetail = () => {
                                     <span className="text-sm font-bold text-stone-700 ml-2">{product.rating}</span>
                                 </div>
                                 <div className="h-4 w-px bg-stone-200" />
-                                <span className="text-sm text-stone-500 font-medium">{product.reviews} Merchant Reviews</span>
+                                <span className="text-sm text-stone-500 font-medium">{product.reviews} {t('product_detail.reviews')}</span>
                             </div>
                         </div>
 
@@ -108,7 +110,7 @@ const ProductDetail = () => {
 
                         <div className="bg-white rounded-2xl border border-nature-border p-6 shadow-sm mb-8">
                             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <Scale className="w-5 h-5 text-primary" /> Select Bulk Quantity
+                                <Scale className="w-5 h-5 text-primary" /> {t('product_detail.select_bulk')}
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {product.bulkOptions.map((option) => (
@@ -132,10 +134,10 @@ const ProductDetail = () => {
                         <div className="bg-stone-900 rounded-3xl p-8 text-white shadow-xl mt-auto">
                             <div className="flex justify-between items-end mb-8">
                                 <div>
-                                    <p className="text-stone-400 text-sm mb-1 uppercase tracking-widest font-bold">Total price for {selectedOption.quantity}{product.unit}</p>
+                                    <p className="text-stone-400 text-sm mb-1 uppercase tracking-widest font-bold">{t('product_detail.total_price')} {selectedOption.quantity}{product.unit}</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-5xl font-display font-extrabold text-white">₹{selectedOption.price * quantity}</span>
-                                        <span className="text-stone-400 font-medium">incl. taxes</span>
+                                        <span className="text-stone-400 font-medium">{t('product_detail.incl_taxes')}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center bg-white/10 rounded-2xl p-1 border border-white/20">
@@ -162,9 +164,9 @@ const ProductDetail = () => {
                                     }`}
                             >
                                 {added ? (
-                                    <> <BadgeCheck className="w-6 h-6" /> Added to Shipment </>
+                                    <> <BadgeCheck className="w-6 h-6" /> {t('product_detail.added')} </>
                                 ) : (
-                                    <> <ShoppingCart className="w-6 h-6" /> Add to Bulk Order </>
+                                    <> <ShoppingCart className="w-6 h-6" /> {t('product_detail.add_order')} </>
                                 )}
                             </button>
                         </div>
@@ -173,11 +175,11 @@ const ProductDetail = () => {
                         <div className="mt-8 grid grid-cols-2 gap-4">
                             <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-nature-border">
                                 <Truck className="w-6 h-6 text-primary" />
-                                <span className="text-sm font-bold text-stone-700 leading-tight">Fast Cargo Delivery</span>
+                                <span className="text-sm font-bold text-stone-700 leading-tight">{t('product_detail.cargo_delivery')}</span>
                             </div>
                             <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-nature-border">
                                 <ShieldCheck className="w-6 h-6 text-primary" />
-                                <span className="text-sm font-bold text-stone-700 leading-tight">Farmer-Direct Guarantee</span>
+                                <span className="text-sm font-bold text-stone-700 leading-tight">{t('product_detail.farmer_guarantee')}</span>
                             </div>
                         </div>
                     </div>

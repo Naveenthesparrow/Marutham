@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { QrCode, Upload, CheckCircle, Clock, AlertCircle, Copy, Info, ArrowLeft, Camera } from 'lucide-react';
 
 const Payment = () => {
+    const { t } = useTranslation();
     const { orderId } = useParams();
     const navigate = useNavigate();
     const { user, token } = useAuth();
@@ -18,7 +20,7 @@ const Payment = () => {
     useEffect(() => {
         const fetchQR = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/payment/create', {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payment/create`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -30,10 +32,10 @@ const Payment = () => {
                 if (response.ok) {
                     setQrData(data);
                 } else {
-                    setError(data.message);
+                    setError(data.message || t('payment.error_qr'));
                 }
             } catch (err) {
-                setError('Failed to load payment details');
+                setError(t('payment.error_qr'));
             } finally {
                 setLoading(false);
             }
@@ -41,7 +43,7 @@ const Payment = () => {
 
         const checkStatus = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/payment/status/${orderId}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payment/status/${orderId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -59,7 +61,7 @@ const Payment = () => {
             fetchQR();
             checkStatus();
         }
-    }, [orderId, token]);
+    }, [orderId, token, t]);
 
     const handleFileChange = (e) => {
         if (e.target.files[0]) {
@@ -69,7 +71,7 @@ const Payment = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!screenshot) return alert('Please upload a screenshot');
+        if (!screenshot) return alert(t('payment.error_upload'));
 
         setUploading(true);
         const formData = new FormData();
@@ -80,7 +82,7 @@ const Payment = () => {
         formData.append('transactionNote', qrData.transactionNote);
 
         try {
-            const response = await fetch('http://localhost:5000/api/payment/upload', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payment/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -92,10 +94,10 @@ const Payment = () => {
                 setPaymentStatus('pending');
             } else {
                 const data = await response.json();
-                alert(data.message || 'Upload failed');
+                alert(data.message || t('cart.error_place'));
             }
         } catch (err) {
-            alert('Network error. Please try again.');
+            alert(t('cart.error_network'));
         } finally {
             setUploading(false);
         }
@@ -103,7 +105,7 @@ const Payment = () => {
 
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
-        alert('Copied to clipboard!');
+        alert(t('payment.copied'));
     };
 
     if (loading) {
@@ -111,7 +113,7 @@ const Payment = () => {
             <div className="min-h-screen bg-nature-bg flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-stone-500 font-medium">Initializing Secure Payment...</p>
+                    <p className="text-stone-500 font-medium">{t('payment.initializing')}</p>
                 </div>
             </div>
         );
@@ -123,7 +125,7 @@ const Payment = () => {
                 <div className="max-w-4xl mx-auto">
 
                     <Link to="/cart" className="inline-flex items-center gap-2 text-stone-500 hover:text-primary transition-colors mb-8 group font-medium">
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Cart
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> {t('payment.back_to_cart')}
                     </Link>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -132,7 +134,7 @@ const Payment = () => {
                         <div className="space-y-8">
                             <div className="bg-white rounded-[2.5rem] border border-nature-border p-8 shadow-sm">
                                 <h2 className="text-2xl font-display font-bold text-stone-900 mb-6 flex items-center gap-3">
-                                    <QrCode className="w-6 h-6 text-primary" /> Scan & Pay
+                                    <QrCode className="w-6 h-6 text-primary" /> {t('payment.scan_pay')}
                                 </h2>
 
                                 <div className="flex flex-col items-center">
@@ -145,14 +147,14 @@ const Payment = () => {
                                     </div>
 
                                     <p className="text-stone-500 text-sm mb-8 text-center px-4">
-                                        Open GPay, PhonePe, or any UPI app to scan this QR and complete the payment of
+                                        {t('payment.scan_info')}
                                         <span className="font-bold text-stone-900"> ₹{qrData.amount}</span>
                                     </p>
 
                                     <div className="w-full space-y-4">
                                         <div className="bg-nature-bg rounded-2xl p-4 border border-nature-border flex items-center justify-between">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Merchant VPA</span>
+                                                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{t('payment.merchant_vpa')}</span>
                                                 <span className="font-bold text-stone-700">{qrData.upiId}</span>
                                             </div>
                                             <button
@@ -165,7 +167,7 @@ const Payment = () => {
 
                                         <div className="bg-nature-bg rounded-2xl p-4 border border-nature-border flex items-center justify-between">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Reference Note</span>
+                                                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{t('payment.ref_note')}</span>
                                                 <span className="font-bold text-stone-700">{qrData.transactionNote}</span>
                                             </div>
                                             <div className="p-2 text-stone-300">
@@ -178,10 +180,10 @@ const Payment = () => {
 
                             <div className="bg-primary/5 rounded-3xl p-6 border border-primary/10">
                                 <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
-                                    <Info className="w-4 h-4" /> Secure Payment Guard
+                                    <Info className="w-4 h-4" /> {t('payment.guard_title')}
                                 </h4>
                                 <p className="text-stone-600 text-sm leading-relaxed">
-                                    Your funds are secure. Post payment, please upload the transaction screenshot. Our team verifies payments every 30 minutes between 9 AM - 9 PM IST.
+                                    {t('payment.guard_text')}
                                 </p>
                             </div>
                         </div>
@@ -190,13 +192,13 @@ const Payment = () => {
                         <div className="space-y-8">
                             <div className="bg-white rounded-[2.5rem] border border-nature-border p-8 shadow-sm h-full flex flex-col">
                                 <h2 className="text-2xl font-display font-bold text-stone-900 mb-6 flex items-center gap-3">
-                                    <Upload className="w-6 h-6 text-primary" /> Verify Payment
+                                    <Upload className="w-6 h-6 text-primary" /> {t('payment.verify_title')}
                                 </h2>
 
                                 {paymentStatus === 'none' ? (
                                     <form onSubmit={handleSubmit} className="flex-grow flex flex-col">
                                         <p className="text-stone-600 mb-8">
-                                            Once the payment is successful in your banking app, take a screenshot of the receipt and upload it here for verification.
+                                            {t('payment.verify_text')}
                                         </p>
 
                                         <div className="relative group flex-grow mb-8">
@@ -214,17 +216,17 @@ const Payment = () => {
                                             >
                                                 {screenshot ? (
                                                     <div className="flex flex-col items-center">
-                                                        <CheckCircle className="w-12 h-12 text-primary mb-4" />
+                                                        <CheckCircle className="w-12 h-12 text-leaf mb-4" />
                                                         <span className="text-primary font-bold">{screenshot.name}</span>
-                                                        <span className="text-stone-400 text-xs mt-2">Click to change file</span>
+                                                        <span className="text-stone-400 text-xs mt-2">{t('payment.click_change')}</span>
                                                     </div>
                                                 ) : (
                                                     <div className="flex flex-col items-center">
                                                         <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-md mb-4 group-hover:scale-110 transition-transform">
                                                             <Camera className="w-8 h-8 text-stone-400" />
                                                         </div>
-                                                        <span className="font-bold text-stone-700">Choose Screenshot</span>
-                                                        <span className="text-stone-400 text-xs mt-2">Maximum file size: 5MB (JPG, PNG)</span>
+                                                        <span className="font-bold text-stone-700">{t('payment.choose_screenshot')}</span>
+                                                        <span className="text-stone-400 text-xs mt-2">{t('payment.max_size')}</span>
                                                     </div>
                                                 )}
                                             </label>
@@ -238,9 +240,9 @@ const Payment = () => {
                                             {uploading ? (
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                    Uploading...
+                                                    {t('payment.uploading')}
                                                 </div>
-                                            ) : 'Confirm Payment Submission'}
+                                            ) : t('payment.confirm_btn')}
                                         </button>
                                     </form>
                                 ) : (
@@ -256,13 +258,13 @@ const Payment = () => {
                                                     <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mb-6 border border-amber-100">
                                                         <Clock className="w-12 h-12 text-amber-500 animate-pulse" />
                                                     </div>
-                                                    <h3 className="text-2xl font-display font-bold text-stone-900 mb-3">Verification Pending</h3>
+                                                    <h3 className="text-2xl font-display font-bold text-stone-900 mb-3">{t('payment.pending_title')}</h3>
                                                     <p className="text-stone-500 mb-8 max-w-xs">
-                                                        We've received your receipt. Our team is verifying the transaction with the bank.
+                                                        {t('payment.pending_text')}
                                                     </p>
                                                     <div className="bg-nature-bg px-4 py-2 rounded-full border border-nature-border text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
                                                         <div className="w-2 h-2 bg-amber-500 rounded-full animate-ping" />
-                                                        Updates in ~30 mins
+                                                        {t('payment.updates_info')}
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -277,11 +279,11 @@ const Payment = () => {
                                                     <div className="w-24 h-24 bg-leaf/10 rounded-full flex items-center justify-center mb-6 border border-leaf/20">
                                                         <CheckCircle className="w-12 h-12 text-leaf" />
                                                     </div>
-                                                    <h3 className="text-2xl font-display font-bold text-stone-900 mb-3">Payment Confirmed</h3>
+                                                    <h3 className="text-2xl font-display font-bold text-stone-900 mb-3">{t('payment.verified_title')}</h3>
                                                     <p className="text-stone-500 mb-8 max-w-xs">
-                                                        Thank you! Your order has been marked as paid and sent to our fulfillment center.
+                                                        {t('payment.verified_text')}
                                                     </p>
-                                                    <Link to="/orders" className="btn-primary w-full">View My Orders</Link>
+                                                    <Link to="/orders" className="btn-primary w-full">{t('nav.view_orders')}</Link>
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
